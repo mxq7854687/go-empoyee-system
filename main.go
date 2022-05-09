@@ -4,27 +4,24 @@ import (
 	"database/sql"
 	"example/employee/server/api"
 	db "example/employee/server/db/sqlc"
+	"example/employee/server/util"
 	"log"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbDriver      = "postgres"
-	dbSource      = "postgresql://root:admin@localhost:5432/employee?sslmode=disable"
-	serverAddress = "0.0.0.0:8080"
-)
-
 func main() {
-	conn, err := sql.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig("./")
 	if err != nil {
-		log.Fatal("DB Connection [ Failed ]: ", err)
+		log.Fatal("Cannot load configuration with err: ", err)
 	}
+
+	conn, err := sql.Open(config.DBDriver, config.DBSource)
 
 	store := db.NewStore(conn)
 	server := api.NewServer(store)
 
-	err = server.Start(serverAddress)
+	err = server.Start(config.ServerAdress)
 	if err != nil {
 		log.Fatal("cannot start server: ", err)
 	}

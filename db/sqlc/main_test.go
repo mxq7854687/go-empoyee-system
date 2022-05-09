@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"example/employee/server/util"
 	"log"
 	"os"
 	"testing"
@@ -9,17 +10,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbDriver = "postgres"
-	dbSource = "postgresql://root:admin@localhost:5432/employee?sslmode=disable"
-)
-
 var testQueries *Queries
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	var err error
-	testDB, err = sql.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig("../../")
+	if err != nil {
+		log.Fatal("Cannot load configuration with err: ", err)
+	}
+
+	testDB, err = sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		log.Fatal("U cannot use the connection")
 	}
