@@ -7,7 +7,7 @@ import (
 )
 
 type CreateDepartmentRequest struct {
-	departmentName string `json:"departmentName" binding:"required"`
+	DepartmentName string `json:"department_name" binding:"required"`
 }
 
 func (server *Server) createDepartment(ctx *gin.Context) {
@@ -17,7 +17,7 @@ func (server *Server) createDepartment(ctx *gin.Context) {
 		return
 	}
 
-	department, err := server.store.CreateDepartment(ctx, req.departmentName)
+	department, err := server.store.CreateDepartment(ctx, req.DepartmentName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
