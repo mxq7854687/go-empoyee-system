@@ -37,19 +37,3 @@ func (store *Store) execTX(ctx context.Context, fn func(*Queries) error) error {
 
 	return tx.Commit()
 }
-
-func (store *Store) CreateEmployeeTx(ctx context.Context, arg CreateEmployeeParams) (Employee, error) {
-	var result Employee
-
-	err := store.execTX(ctx, func(q *Queries) error {
-		var err error
-		result, err = q.CreateEmployee(context.Background(), arg)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return result, err
-}
