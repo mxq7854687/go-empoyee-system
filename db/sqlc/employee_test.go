@@ -29,7 +29,7 @@ func createRandomEmployee(t *testing.T) Employee {
 		JobID:        job.JobID,
 		Salary:       util.RandomInt64(job.MinSalary.Int64, job.MaxSalary.Int64),
 		ManagerID:    sql.NullInt64{0, false},
-		DepartmentID: sql.NullInt64{department.DepartmentID, true},
+		DepartmentID: department.DepartmentID,
 	}
 	employee, err := testQueries.CreateEmployee(context.Background(), arg)
 	require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestDeleteEmployee(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, job)
 
-	department, err := testQueries.GetDepartment(context.Background(), employee1.DepartmentID.Int64)
+	department, err := testQueries.GetDepartment(context.Background(), employee1.DepartmentID)
 	require.NoError(t, err)
 	require.NotEmpty(t, department)
 }
