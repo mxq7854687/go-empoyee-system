@@ -37,7 +37,7 @@ type CreateEmployeeParams struct {
 	JobID        int64          `json:"job_id"`
 	Salary       int64          `json:"salary"`
 	ManagerID    sql.NullInt64  `json:"manager_id"`
-	DepartmentID sql.NullInt64  `json:"department_id"`
+	DepartmentID int64          `json:"department_id"`
 }
 
 func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error) {
@@ -163,7 +163,7 @@ type UpdateEmployeeParams struct {
 	PhoneNumber  sql.NullString `json:"phone_number"`
 	HireDate     time.Time      `json:"hire_date"`
 	ManagerID    sql.NullInt64  `json:"manager_id"`
-	DepartmentID sql.NullInt64  `json:"department_id"`
+	DepartmentID int64          `json:"department_id"`
 }
 
 func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {

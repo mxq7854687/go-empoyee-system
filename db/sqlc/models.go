@@ -24,7 +24,7 @@ type Employee struct {
 	JobID        int64          `json:"job_id"`
 	Salary       int64          `json:"salary"`
 	ManagerID    sql.NullInt64  `json:"manager_id"`
-	DepartmentID sql.NullInt64  `json:"department_id"`
+	DepartmentID int64          `json:"department_id"`
 }
 
 type Job struct {
