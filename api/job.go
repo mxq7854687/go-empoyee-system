@@ -133,15 +133,21 @@ func (server *Server) deleteJob(ctx *gin.Context) {
 		return
 	}
 
-	err := server.store.DeleteJob(ctx, req.JobID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+	_, err1 := server.store.GetJob(ctx, req.JobID)
+	if err1 != nil {
+		if err1 == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err1))
 			return
 		}
 
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err1))
 		return
+	}
+
+	err2 := server.store.DeleteJob(ctx, req.JobID)
+
+	if err2 != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err2))
 	}
 
 	ctx.JSON(http.StatusOK, "success")
