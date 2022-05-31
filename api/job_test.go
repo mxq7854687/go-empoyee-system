@@ -207,6 +207,126 @@ func TestGetJob(t *testing.T) {
 	}
 }
 
+func TestListJobs(t *testing.T) {
+	n := 5
+	jobs := make([]db.Job, n)
+
+	for i := 0; i < n; i++ {
+		jobs[i] = randomJob()
+	}
+
+	type QueryParam struct {
+		pageID   int32
+		pageSize int32
+	}
+
+	testCases := []struct {
+		name          string
+		query         QueryParam
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			query: QueryParam{
+				pageID:   1,
+				pageSize: int32(n),
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.ListJobsParams{
+					Limit:  int32(n),
+					Offset: 0,
+				}
+
+				store.EXPECT().
+					ListJobs(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(jobs, nil)
+
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchJobs(t, recorder.Body, jobs)
+			},
+		},
+		{
+			name: "InternalError",
+			query: QueryParam{
+				pageID:   1,
+				pageSize: int32(n),
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListJobs(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return([]db.Job{}, sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "BadRequest-Invalid page ID",
+			query: QueryParam{
+				pageID:   -1,
+				pageSize: int32(n),
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListJobs(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "BadRequest-Invalid page size",
+			query: QueryParam{
+				pageID:   1,
+				pageSize: 10000,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListJobs(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		currentTest := testCases[i]
+
+		t.Run(currentTest.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			currentTest.buildStubs(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			url := "/jobs"
+			request, err := http.NewRequest(http.MethodGet, url, nil)
+			require.NoError(t, err)
+
+			// query params
+			q := request.URL.Query()
+			q.Add("page_id", fmt.Sprintf("%d", currentTest.query.pageID))
+			q.Add("page_size", fmt.Sprintf("%d", currentTest.query.pageSize))
+			request.URL.RawQuery = q.Encode()
+
+			server.router.ServeHTTP(recorder, request)
+			currentTest.checkResponse(recorder)
+		})
+	}
+
+}
+
 func randomJob() db.Job {
 	return db.Job{
 		JobID:     util.RandomInt64(1, 1000),
@@ -224,4 +344,14 @@ func requireBodyMatchJob(t *testing.T, responseBody *bytes.Buffer, job db.Job) {
 	err = json.Unmarshal(data, &gotJob)
 	require.NoError(t, err)
 	require.Equal(t, job, gotJob)
+}
+
+func requireBodyMatchJobs(t *testing.T, responseBody *bytes.Buffer, job []db.Job) {
+	data, err := ioutil.ReadAll(responseBody)
+	require.NoError(t, err)
+
+	var gotJobs []db.Job
+	err = json.Unmarshal(data, &gotJobs)
+	require.NoError(t, err)
+	require.Equal(t, job, gotJobs)
 }
