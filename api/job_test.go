@@ -13,9 +13,113 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
+
+func TestCreateJob(t *testing.T) {
+	job := randomJob()
+
+	testCases := []struct {
+		name          string
+		body          gin.H
+		buildStub     func(store *mockdb.MockStore)
+		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			body: gin.H{
+				"job_title":  job.JobTitle,
+				"min_salary": job.MinSalary,
+				"max_salary": job.MaxSalary,
+			},
+			buildStub: func(store *mockdb.MockStore) {
+				args := db.CreateJobParams{
+					JobTitle:  job.JobTitle,
+					MinSalary: job.MinSalary,
+					MaxSalary: job.MaxSalary,
+				}
+
+				store.EXPECT().
+					CreateJob(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(job, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchJob(t, recorder.Body, job)
+			},
+		},
+		{
+			name: "InternalError",
+			body: gin.H{
+				"job_title":  job.JobTitle,
+				"min_salary": job.MinSalary,
+				"max_salary": job.MaxSalary,
+			},
+			buildStub: func(store *mockdb.MockStore) {
+				args := db.CreateJobParams{
+					JobTitle:  job.JobTitle,
+					MinSalary: job.MinSalary,
+					MaxSalary: job.MaxSalary,
+				}
+
+				store.EXPECT().
+					CreateJob(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(db.Job{}, sql.ErrConnDone)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "BadRequest-Invalid body",
+			body: gin.H{},
+			buildStub: func(store *mockdb.MockStore) {
+				args := db.CreateJobParams{
+					JobTitle:  job.JobTitle,
+					MinSalary: job.MinSalary,
+					MaxSalary: job.MaxSalary,
+				}
+
+				store.EXPECT().
+					CreateJob(gomock.Any(), gomock.Eq(args)).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		currentTest := testCases[i]
+
+		t.Run(currentTest.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			currentTest.buildStub(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			//Marshal body data to JSON
+			data, err := json.Marshal(currentTest.body)
+			require.NoError(t, err)
+
+			url := "/jobs"
+			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			currentTest.checkResponse(t, recorder)
+		})
+	}
+}
 
 func TestGetJob(t *testing.T) {
 	job := randomJob()
@@ -100,9 +204,7 @@ func TestGetJob(t *testing.T) {
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
-
 	}
-
 }
 
 func randomJob() db.Job {
