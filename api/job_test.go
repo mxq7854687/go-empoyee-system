@@ -324,7 +324,125 @@ func TestListJobs(t *testing.T) {
 			currentTest.checkResponse(recorder)
 		})
 	}
+}
 
+func TestUpdateJob(t *testing.T) {
+	job := randomJob()
+	updatedJobTitle := util.RandomJobTitle()
+
+	testCases := []struct {
+		name          string
+		jobID         int64
+		body          gin.H
+		buildStub     func(store *mockdb.MockStore)
+		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name:  "OK",
+			jobID: job.JobID,
+			body: gin.H{
+				"job_title":  updatedJobTitle,
+				"min_salary": job.MinSalary,
+				"max_salary": job.MaxSalary,
+			},
+			buildStub: func(store *mockdb.MockStore) {
+
+				args := db.UpdateJobParams{
+					JobID:     job.JobID,
+					JobTitle:  updatedJobTitle,
+					MinSalary: job.MinSalary,
+					MaxSalary: job.MaxSalary,
+				}
+
+				store.EXPECT().
+					UpdateJob(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(job, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchJob(t, recorder.Body, job)
+			},
+		},
+		{
+			name:  "InternalError",
+			jobID: job.JobID,
+			body: gin.H{
+				"job_title":  updatedJobTitle,
+				"min_salary": job.MinSalary,
+				"max_salary": job.MaxSalary,
+			},
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					UpdateJob(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Job{}, sql.ErrConnDone)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:  "BadRequest-Invalid ID",
+			jobID: -1,
+			body: gin.H{
+				"job_title":  updatedJobTitle,
+				"min_salary": job.MinSalary,
+				"max_salary": job.MaxSalary,
+			},
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					UpdateJob(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name:  "BadRequest-Invalid Body",
+			jobID: job.JobID,
+			body: gin.H{
+				"job_title":  -1,
+				"min_salary": job.MinSalary,
+				"max_salary": job.MaxSalary,
+			},
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					UpdateJob(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		currentTest := testCases[i]
+
+		t.Run(currentTest.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			currentTest.buildStub(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			//Marshal body data to JSON
+			data, err := json.Marshal(currentTest.body)
+			require.NoError(t, err)
+
+			url := fmt.Sprintf("/jobs/%d", currentTest.jobID)
+			request, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(data))
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			currentTest.checkResponse(t, recorder)
+		})
+	}
 }
 
 func randomJob() db.Job {

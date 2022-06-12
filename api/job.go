@@ -87,16 +87,20 @@ func (server *Server) listJobs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, jobs)
 }
 
-type UpdateJobRequest struct {
-	JobID     int64         `uri:"id" binding:"required,min=1"`
+type UpdateJobRequestUri struct {
+	JobID int64 `uri:"id" binding:"required,min=1"`
+}
+
+type UpdateJobRequestJson struct {
 	JobTitle  string        `form:"job_title" json:"job_title" binding:"required"`
 	MinSalary sql.NullInt64 `form:"min_salary" json:"min_salary" binding:"required"`
 	MaxSalary sql.NullInt64 `from:"max_salary" json:"max_salary" binding:"required"`
 }
 
 func (server *Server) updateJob(ctx *gin.Context) {
-	var req UpdateJobRequest
-	if errInUri := ctx.ShouldBindUri(&req); errInUri != nil {
+	var uri UpdateJobRequestUri
+	var req UpdateJobRequestJson
+	if errInUri := ctx.ShouldBindUri(&uri); errInUri != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(errInUri))
 		return
 	}
@@ -107,7 +111,7 @@ func (server *Server) updateJob(ctx *gin.Context) {
 	}
 
 	arg := db.UpdateJobParams{
-		JobID:     req.JobID,
+		JobID:     uri.JobID,
 		JobTitle:  req.JobTitle,
 		MinSalary: req.MinSalary,
 		MaxSalary: req.MaxSalary,
