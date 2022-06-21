@@ -19,10 +19,13 @@ func main() {
 	conn, err := sql.Open(config.DBDriver, config.DBSource)
 
 	store := db.NewStore(conn)
-	server := api.NewServer(store)
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal("Cannot create server: ", err)
+	}
 
 	err = server.Start(config.ServerAdress)
 	if err != nil {
-		log.Fatal("cannot start server: ", err)
+		log.Fatal("Server failed to start: ", err)
 	}
 }
