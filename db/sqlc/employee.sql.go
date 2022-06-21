@@ -149,8 +149,8 @@ func (q *Queries) ListEmployees(ctx context.Context, arg ListEmployeesParams) ([
 
 const updateEmployee = `-- name: UpdateEmployee :one
 UPDATE employees
-SET first_name = $2, last_name = $3, email = $4, phone_number = $5,
-    hire_date = $6, manager_id = $7, department_id = $8
+SET first_name = $2, last_name = $3, phone_number = $4,
+    hire_date = $5, manager_id = $6, department_id = $7
 WHERE employee_id = $1
 RETURNING employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, manager_id, department_id
 `
@@ -159,7 +159,6 @@ type UpdateEmployeeParams struct {
 	EmployeeID   int64          `json:"employee_id"`
 	FirstName    sql.NullString `json:"first_name"`
 	LastName     string         `json:"last_name"`
-	Email        string         `json:"email"`
 	PhoneNumber  sql.NullString `json:"phone_number"`
 	HireDate     time.Time      `json:"hire_date"`
 	ManagerID    sql.NullInt64  `json:"manager_id"`
@@ -171,7 +170,6 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		arg.EmployeeID,
 		arg.FirstName,
 		arg.LastName,
-		arg.Email,
 		arg.PhoneNumber,
 		arg.HireDate,
 		arg.ManagerID,
