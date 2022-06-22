@@ -7,14 +7,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type Platform string
+
+const (
+	Web    Platform = "web"
+	Mobile          = "Mobile"
+)
+
 type Payload struct {
 	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`
+	Platform  Platform  `json:"platform"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiredAt time.Time `json:"expired_at"`
 }
 
-func NewPayload(email string, duration time.Duration) (*Payload, error) {
+func NewPayload(email string, platform Platform, duration time.Duration) (*Payload, error) {
 	tokenId, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -23,6 +31,7 @@ func NewPayload(email string, duration time.Duration) (*Payload, error) {
 	payload := &Payload{
 		ID:        tokenId,
 		Email:     email,
+		Platform:  platform,
 		IssuedAt:  time.Now(),
 		ExpiredAt: time.Now().Add(duration),
 	}
