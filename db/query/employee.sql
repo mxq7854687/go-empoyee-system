@@ -20,8 +20,8 @@ WHERE employee_id = $1 LIMIT 1;
 
 -- name: UpdateEmployee :one
 UPDATE employees
-SET first_name = $2, last_name = $3, email = $4, phone_number = $5,
-    hire_date = $6, manager_id = $7, department_id = $8
+SET first_name = $2, last_name = $3, phone_number = $4,
+    hire_date = $5, manager_id = $6, department_id = $7
 WHERE employee_id = $1
 RETURNING *;
 

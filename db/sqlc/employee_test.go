@@ -18,12 +18,13 @@ func compareTwoDate(t *testing.T, t1 time.Time, t2 time.Time) {
 }
 
 func createRandomEmployee(t *testing.T) Employee {
+	user := createRandomUser(t)
 	job := createRandomJob(t)
 	department := createRandomDepartment(t)
 	arg := CreateEmployeeParams{
 		FirstName:    sql.NullString{util.RandomFirstName(), true},
 		LastName:     util.RandomLastName(),
-		Email:        util.RandomEmail(),
+		Email:        user.Email,
 		PhoneNumber:  sql.NullString{util.RandomPhoneNumber(), true},
 		HireDate:     time.Now(),
 		JobID:        job.JobID,
@@ -78,7 +79,6 @@ func TestUpdateEmployee(t *testing.T) {
 		EmployeeID:   employee1.EmployeeID,
 		FirstName:    sql.NullString{util.RandomFirstName(), true},
 		LastName:     employee1.LastName,
-		Email:        util.RandomEmail(),
 		PhoneNumber:  employee1.PhoneNumber,
 		HireDate:     time.Now(),
 		ManagerID:    employee1.ManagerID,
@@ -92,7 +92,6 @@ func TestUpdateEmployee(t *testing.T) {
 
 	require.Equal(t, arg.FirstName, employee2.FirstName)
 	require.Equal(t, arg.LastName, employee2.LastName)
-	require.Equal(t, arg.Email, employee2.Email)
 	require.Equal(t, arg.PhoneNumber, employee2.PhoneNumber)
 	compareTwoDate(t, arg.HireDate, employee2.HireDate)
 	require.Equal(t, arg.ManagerID, employee2.ManagerID)

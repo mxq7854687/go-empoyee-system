@@ -6,8 +6,29 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
+
+type UserStatus string
+
+const (
+	UserStatusPending     UserStatus = "pending"
+	UserStatusActivated   UserStatus = "activated"
+	UserStatusDeactivated UserStatus = "deactivated"
+)
+
+func (e *UserStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = UserStatus(s)
+	case string:
+		*e = UserStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for UserStatus: %T", src)
+	}
+	return nil
+}
 
 type Department struct {
 	DepartmentID   int64  `json:"department_id"`
@@ -32,4 +53,12 @@ type Job struct {
 	JobTitle  string        `json:"job_title"`
 	MinSalary sql.NullInt64 `json:"min_salary"`
 	MaxSalary sql.NullInt64 `json:"max_salary"`
+}
+
+type User struct {
+	Email          string     `json:"email"`
+	Status         UserStatus `json:"status"`
+	HashedPassword string     `json:"hashed_password"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	CreatedAt      time.Time  `json:"created_at"`
 }
