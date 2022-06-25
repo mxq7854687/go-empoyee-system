@@ -13,13 +13,19 @@ import (
 func main() {
 	config, err := util.LoadConfig("./")
 	if err != nil {
-		log.Fatal("Cannot load configuration with err: ", err)
+		log.Fatal("cannot load config: ", err)
 	}
 
-	conn, err := sql.Open(config.DBDriver, config.DBSource)
+	connection, err := sql.Open(config.DBDriver, config.DBSource)
+	if err != nil {
+		log.Fatal("DB Connection [ Failed ]: ", err)
+	}
 
-	store := db.NewStore(conn)
-	server := api.NewServer(store)
+	store := db.NewStore(connection)
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal("Cannot create server: ", err)
+	}
 
 	err = server.Start(config.ServerAdress)
 	if err != nil {

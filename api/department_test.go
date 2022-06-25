@@ -72,7 +72,7 @@ func TestPostDepartmentAPI(t *testing.T) {
 			store := mockdb.NewMockStore(controller)
 			tc.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			jsonBytes, err := json.Marshal(tc.createDepartmentRequest)
