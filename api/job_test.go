@@ -445,6 +445,106 @@ func TestUpdateJob(t *testing.T) {
 	}
 }
 
+func TestDeleteJob(t *testing.T) {
+	job := randomJob()
+
+	testCases := []struct {
+		name          string
+		jobID         int64
+		buildStub     func(store *mockdb.MockStore)
+		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name:  "OK",
+			jobID: job.JobID,
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
+					After(store.EXPECT().
+						GetJob(gomock.Any(), gomock.Eq(job.JobID))).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+			},
+		},
+		{
+			name:  "BadRequest",
+			jobID: -1,
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().DeleteJob(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name:  "NotFound",
+			jobID: job.JobID,
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
+					Times(0).
+					Return(sql.ErrNoRows).
+					After(store.EXPECT().GetJob(gomock.Any(), gomock.Eq(job.JobID)).Times(1).Return(db.Job{}, sql.ErrNoRows))
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name:  "InternalError - from GetJob",
+			jobID: job.JobID,
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
+					Times(0).
+					Return(sql.ErrConnDone).
+					After(store.EXPECT().GetJob(gomock.Any(), gomock.Eq((job.JobID))).Times(1).Return(db.Job{}, sql.ErrConnDone))
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:  "InternalError - from DeleteJob",
+			jobID: job.JobID,
+			buildStub: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
+					Times(1).
+					After(store.EXPECT().GetJob(gomock.Any(), gomock.Eq((job.JobID))).Times(1).Return(job, nil)).
+					Return(sql.ErrConnDone)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		currentTest := testCases[i]
+
+		t.Run(currentTest.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			currentTest.buildStub(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			url := fmt.Sprintf("/jobs/%d", currentTest.jobID)
+			request, err := http.NewRequest(http.MethodDelete, url, nil)
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			currentTest.checkResponse(t, recorder)
+		})
+	}
+}
+
 func randomJob() db.Job {
 	return db.Job{
 		JobID:     util.RandomInt64(1, 1000),
