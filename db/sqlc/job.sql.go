@@ -84,7 +84,7 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, erro
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Job
+	items := []Job{}
 	for rows.Next() {
 		var i Job
 		if err := rows.Scan(
