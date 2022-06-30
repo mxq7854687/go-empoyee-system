@@ -35,10 +35,17 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 	router.POST("/auth/login", server.login)
 
+	router.POST("/auth/activate", server.activateUser)
+	// router for job
+	router.POST("/jobs", server.createJob)
+	router.GET("/jobs/:id", server.getJob)
+	router.GET("/jobs", server.listJobs)
+	router.PUT("/jobs/:id", server.updateJob)
+	router.DELETE("/jobs/:id", server.deleteJob)
+
 	server.router = router
 	return server, nil
 }
-
 func (server *Server) Start(address string) error {
 	return server.router.Run(address)
 }

@@ -15,11 +15,12 @@ func TestPasetoMaker(t *testing.T) {
 
 	email := util.RandomEmail()
 	duration := time.Minute
+	platform := Web
 
 	issuedAt := time.Now()
 	expiredAt := issuedAt.Add(duration)
 
-	token, err := maker.CreateToken(email, duration)
+	token, err := maker.CreateToken(email, platform, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -36,10 +37,11 @@ func TestExpiredPasetoToken(t *testing.T) {
 	maker, err := NewPasetoMaker(util.RandomString(32))
 	require.NoError(t, err)
 
-	username := util.RandomEmail()
+	email := util.RandomEmail()
+	platform := Web
 	duration := time.Minute
 
-	token, err := maker.CreateToken(username, -duration)
+	token, err := maker.CreateToken(email, platform, -duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -50,7 +52,7 @@ func TestExpiredPasetoToken(t *testing.T) {
 }
 
 func TestInvalidPasetoToken(t *testing.T) {
-	payload, err := NewPayload(util.RandomEmail(), time.Minute)
+	payload, err := NewPayload(util.RandomEmail(), Web, time.Minute)
 	require.NoError(t, err)
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodNone, payload)
