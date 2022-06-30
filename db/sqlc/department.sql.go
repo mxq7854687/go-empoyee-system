@@ -65,7 +65,7 @@ func (q *Queries) ListDepartments(ctx context.Context, arg ListDepartmentsParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Department
+	items := []Department{}
 	for rows.Next() {
 		var i Department
 		if err := rows.Scan(&i.DepartmentID, &i.DepartmentName); err != nil {

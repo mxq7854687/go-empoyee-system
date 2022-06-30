@@ -26,6 +26,12 @@ func (server *Server) setupRouter() {
 	router.POST("/departments", server.createDepartment)
 
 	router.POST("/auth/activate", server.activateUser)
+	// router for job
+	router.POST("/jobs", server.createJob)
+	router.GET("/jobs/:id", server.getJob)
+	router.GET("/jobs", server.listJobs)
+	router.PUT("/jobs/:id", server.updateJob)
+	router.DELETE("/jobs/:id", server.deleteJob)
 
 	server.router = router
 }

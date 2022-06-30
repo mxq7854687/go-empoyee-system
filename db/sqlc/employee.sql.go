@@ -119,7 +119,7 @@ func (q *Queries) ListEmployees(ctx context.Context, arg ListEmployeesParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Employee
+	items := []Employee{}
 	for rows.Next() {
 		var i Employee
 		if err := rows.Scan(
