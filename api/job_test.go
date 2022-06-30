@@ -115,6 +115,7 @@ func TestCreateJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			addMockAuthBearer(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
@@ -201,6 +202,7 @@ func TestGetJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			addMockAuthBearer(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
@@ -320,6 +322,7 @@ func TestListJobs(t *testing.T) {
 			q.Add("page_size", fmt.Sprintf("%d", currentTest.query.pageSize))
 			request.URL.RawQuery = q.Encode()
 
+			addMockAuthBearer(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(recorder)
 		})
@@ -439,6 +442,7 @@ func TestUpdateJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(data))
 			require.NoError(t, err)
 
+			addMockAuthBearer(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
@@ -539,6 +543,7 @@ func TestDeleteJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
+			addMockAuthBearer(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
