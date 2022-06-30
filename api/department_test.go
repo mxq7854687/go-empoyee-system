@@ -80,6 +80,7 @@ func TestPostDepartmentAPI(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBytes))
 
 			require.NoError(t, err)
+			addMockAuthBearer(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})

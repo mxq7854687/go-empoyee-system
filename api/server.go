@@ -31,17 +31,17 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 	router := gin.Default()
 
-	router.POST("/departments", server.createDepartment)
-
 	router.POST("/auth/login", server.login)
-
 	router.POST("/auth/activate", server.activateUser)
+	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
+
+	authRoutes.POST("/departments", server.createDepartment)
 	// router for job
-	router.POST("/jobs", server.createJob)
-	router.GET("/jobs/:id", server.getJob)
-	router.GET("/jobs", server.listJobs)
-	router.PUT("/jobs/:id", server.updateJob)
-	router.DELETE("/jobs/:id", server.deleteJob)
+	authRoutes.POST("/jobs", server.createJob)
+	authRoutes.GET("/jobs/:id", server.getJob)
+	authRoutes.GET("/jobs", server.listJobs)
+	authRoutes.PUT("/jobs/:id", server.updateJob)
+	authRoutes.DELETE("/jobs/:id", server.deleteJob)
 
 	server.router = router
 	return server, nil
