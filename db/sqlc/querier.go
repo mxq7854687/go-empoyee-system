@@ -15,7 +15,6 @@ type Querier interface {
 	CreateJob(ctx context.Context, arg CreateJobParams) (Job, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAllRole(ctx context.Context) error
 	DeleteDepartments(ctx context.Context, departmentID int64) error
 	DeleteEmployee(ctx context.Context, employeeID int64) error
 	DeleteJob(ctx context.Context, jobID int64) error

@@ -48,22 +48,6 @@ func TestGetRole(t *testing.T) {
 	require.WithinDuration(t, role1.CreatedAt, role2.CreatedAt, time.Second)
 }
 
-func TestDeleteAllRole(t *testing.T) {
-	role1 := createRandomRole(t)
-	role2 := createRandomRole(t)
-
-	err := testQueries.DeleteAllRole(context.Background())
-	require.NoError(t, err)
-
-	getRole1, err := testQueries.GetRole(context.Background(), role1.ID)
-	require.Error(t, err)
-	require.Empty(t, getRole1)
-
-	getRole2, err := testQueries.GetRole(context.Background(), role2.ID)
-	require.Error(t, err)
-	require.Empty(t, getRole2)
-}
-
 func TestGetRoleByName(t *testing.T) {
 	role := createRandomRole(t)
 

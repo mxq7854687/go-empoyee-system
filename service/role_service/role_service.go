@@ -102,8 +102,8 @@ func (roleService *RoleService) InitRole() {
 	}
 }
 
-func (roleService *RoleService) HasRolePriviledge(role Role, requiredPrivilege db.Privilege) error {
-	getRole, err := roleService.Store.GetRoleByRoleName(roleService.Context, string(role))
+func (roleService *RoleService) HasRolePriviledge(role string, requiredPrivilege db.Privilege) error {
+	getRole, err := roleService.Store.GetRoleByRoleName(roleService.Context, role)
 	if err != nil {
 		return err
 	}
@@ -119,4 +119,12 @@ func (roleService *RoleService) HasRolePriviledge(role Role, requiredPrivilege d
 	}
 
 	return nil
+}
+
+func (roleService *RoleService) HasRolePriviledgeByRoleId(roleId int64, requiredPrivilege db.Privilege) error {
+	getRole, err := roleService.Store.GetRole(roleService.Context, roleId)
+	if err != nil {
+		return err
+	}
+	return roleService.HasRolePriviledge(getRole.Role, requiredPrivilege)
 }

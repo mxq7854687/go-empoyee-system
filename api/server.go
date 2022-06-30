@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	db "example/employee/server/db/sqlc"
+	"example/employee/server/service/role_service"
 	"example/employee/server/token"
 	"example/employee/server/util"
 	"fmt"
@@ -29,19 +31,25 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		config:     config,
 	}
 
+	roleService := role_service.NewRoleService(store, context.Background())
+	roleService.InitRole()
+
 	router := gin.Default()
 
-	router.POST("/departments", server.createDepartment)
-
+	router.POST("/auth/activate", server.activateUser)
 	router.POST("/auth/login", server.login)
 
-	router.POST("/auth/activate", server.activateUser)
+	router.POST("/departments", server.createDepartment,
+		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeCreateAndUpdateDepartments))
 	// router for job
-	router.POST("/jobs", server.createJob)
+	router.POST("/jobs", server.createJob).Use(
+		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeCreateAndUpdateJobs))
 	router.GET("/jobs/:id", server.getJob)
 	router.GET("/jobs", server.listJobs)
-	router.PUT("/jobs/:id", server.updateJob)
-	router.DELETE("/jobs/:id", server.deleteJob)
+	router.PUT("/jobs/:id", server.updateJob,
+		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeCreateAndUpdateJobs))
+	router.DELETE("/jobs/:id", server.deleteJob,
+		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeDeleteJobs))
 
 	server.router = router
 	return server, nil

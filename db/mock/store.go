@@ -124,20 +124,6 @@ func (mr *MockStoreMockRecorder) CreateUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), arg0, arg1)
 }
 
-// DeleteAllRole mocks base method.
-func (m *MockStore) DeleteAllRole(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAllRole", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteAllRole indicates an expected call of DeleteAllRole.
-func (mr *MockStoreMockRecorder) DeleteAllRole(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllRole", reflect.TypeOf((*MockStore)(nil).DeleteAllRole), arg0)
-}
-
 // DeleteDepartments mocks base method.
 func (m *MockStore) DeleteDepartments(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()

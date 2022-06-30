@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const activateUser = `-- name: ActivateUser :exec
@@ -29,21 +30,28 @@ const createUser = `-- name: CreateUser :one
 INSERT INTO users (
 email,
 hashed_password,
-status
+status,
+role_id
 ) VALUES (
-$1, $2, $3
+$1, $2, $3, $4
 )
-RETURNING email, status, hashed_password, updated_at, created_at
+RETURNING email, status, hashed_password, updated_at, created_at, role_id
 `
 
 type CreateUserParams struct {
-	Email          string     `json:"email"`
-	HashedPassword string     `json:"hashed_password"`
-	Status         UserStatus `json:"status"`
+	Email          string        `json:"email"`
+	HashedPassword string        `json:"hashed_password"`
+	Status         UserStatus    `json:"status"`
+	RoleID         sql.NullInt64 `json:"role_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.HashedPassword, arg.Status)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Email,
+		arg.HashedPassword,
+		arg.Status,
+		arg.RoleID,
+	)
 	var i User
 	err := row.Scan(
 		&i.Email,
@@ -51,12 +59,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.HashedPassword,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.RoleID,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT email, status, hashed_password, updated_at, created_at FROM users
+SELECT email, status, hashed_password, updated_at, created_at, role_id FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -69,6 +78,7 @@ func (q *Queries) GetUser(ctx context.Context, email string) (User, error) {
 		&i.HashedPassword,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.RoleID,
 	)
 	return i, err
 }

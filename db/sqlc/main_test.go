@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"database/sql"
 	"example/employee/server/util"
 	"log"
@@ -28,6 +27,5 @@ func TestMain(m *testing.M) {
 	testQueries = New(testDB)
 
 	code := m.Run()
-	testQueries.DeleteAllRole(context.Background())
 	os.Exit(code)
 }

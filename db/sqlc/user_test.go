@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"example/employee/server/util"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 )
 
 func createRandomUser(t *testing.T) User {
+	role := createRandomRole(t)
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
@@ -17,6 +19,7 @@ func createRandomUser(t *testing.T) User {
 		Email:          util.RandomEmail(),
 		HashedPassword: hashedPassword,
 		Status:         UserStatusPending,
+		RoleID:         sql.NullInt64{role.ID, true},
 	}
 	user, err := testQueries.CreateUser(context.Background(), arg)
 	require.NoError(t, err)

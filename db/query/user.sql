@@ -3,9 +3,10 @@
 INSERT INTO users (
 email,
 hashed_password,
-status
+status,
+role_id
 ) VALUES (
-$1, $2, $3
+$1, $2, $3, $4
 )
 RETURNING *;
 

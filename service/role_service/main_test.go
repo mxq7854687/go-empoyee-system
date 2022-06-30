@@ -30,6 +30,5 @@ func TestMain(m *testing.M) {
 	roleService = NewRoleService(store, context.Background())
 
 	code := m.Run()
-	roleService.Store.DeleteAllRole(context.Background())
 	os.Exit(code)
 }

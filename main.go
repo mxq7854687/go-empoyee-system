@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"example/employee/server/api"
 	db "example/employee/server/db/sqlc"
@@ -11,6 +10,8 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+var roleService role_service.RoleService
 
 func main() {
 	config, err := util.LoadConfig("./")
@@ -28,9 +29,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Cannot create server: ", err)
 	}
-
-	service := role_service.NewRoleService(store, context.Background())
-	service.InitRole()
 
 	err = server.Start(config.ServerAdress)
 	if err != nil {

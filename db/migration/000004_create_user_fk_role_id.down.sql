@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS "users" DROP CONSTRAINT IF EXISTS "users_role_id_fkey";
+ALTER TABLE IF EXISTS "users" DROP COLUMN "role_id";

@@ -89,9 +89,10 @@ type Role struct {
 }
 
 type User struct {
-	Email          string     `json:"email"`
-	Status         UserStatus `json:"status"`
-	HashedPassword string     `json:"hashed_password"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-	CreatedAt      time.Time  `json:"created_at"`
+	Email          string        `json:"email"`
+	Status         UserStatus    `json:"status"`
+	HashedPassword string        `json:"hashed_password"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+	CreatedAt      time.Time     `json:"created_at"`
+	RoleID         sql.NullInt64 `json:"role_id"`
 }
