@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"example/employee/server/api"
 	db "example/employee/server/db/sqlc"
+	"example/employee/server/service/role_service"
 	"example/employee/server/util"
 	"log"
 
@@ -26,6 +28,9 @@ func main() {
 	if err != nil {
 		log.Fatal("Cannot create server: ", err)
 	}
+
+	service := role_service.NewRoleService(store, context.Background())
+	service.InitRole()
 
 	err = server.Start(config.ServerAdress)
 	if err != nil {

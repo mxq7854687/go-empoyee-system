@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS "roles";
+DROP TYPE IF EXISTS "privilege";

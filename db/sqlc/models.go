@@ -6,9 +6,34 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 )
+
+type Privilege string
+
+const (
+	PrivilegeCreateAndUpdateJobs        Privilege = "CreateAndUpdateJobs"
+	PrivilegeCreateAndUpdateDepartments Privilege = "CreateAndUpdateDepartments"
+	PrivilegeDeleteJobs                 Privilege = "DeleteJobs"
+	PrivilegeDeleteDepartments          Privilege = "DeleteDepartments"
+	PrivilegeCreateAndUpdateEmployees   Privilege = "CreateAndUpdateEmployees"
+	PrivilegeDelteEmployees             Privilege = "DelteEmployees"
+	PrivilegeReadAllEmployees           Privilege = "ReadAllEmployees"
+)
+
+func (e *Privilege) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Privilege(s)
+	case string:
+		*e = Privilege(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Privilege: %T", src)
+	}
+	return nil
+}
 
 type UserStatus string
 
@@ -53,6 +78,14 @@ type Job struct {
 	JobTitle  string        `json:"job_title"`
 	MinSalary sql.NullInt64 `json:"min_salary"`
 	MaxSalary sql.NullInt64 `json:"max_salary"`
+}
+
+type Role struct {
+	ID         int64           `json:"id"`
+	Role       string          `json:"role"`
+	Privileges json.RawMessage `json:"privileges"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	CreatedAt  time.Time       `json:"created_at"`
 }
 
 type User struct {

@@ -1,8 +1,9 @@
-package db
+package role_service
 
 import (
 	"context"
 	"database/sql"
+	db "example/employee/server/db/sqlc"
 	"example/employee/server/util"
 	"log"
 	"os"
@@ -11,8 +12,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var testQueries *Queries
+var testQueries *db.Queries
 var testDB *sql.DB
+var roleService *RoleService
 
 func TestMain(m *testing.M) {
 	config, err := util.LoadConfig("../../")
@@ -24,10 +26,10 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal("U cannot use the connection")
 	}
-
-	testQueries = New(testDB)
+	store := db.NewStore(testDB)
+	roleService = NewRoleService(store, context.Background())
 
 	code := m.Run()
-	testQueries.DeleteAllRole(context.Background())
+	roleService.Store.DeleteAllRole(context.Background())
 	os.Exit(code)
 }
