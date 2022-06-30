@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	db "example/employee/server/db/sqlc"
 	"example/employee/server/service/role_service"
 	"example/employee/server/token"
@@ -18,7 +17,7 @@ type Server struct {
 	config     util.Config
 }
 
-func NewServer(config util.Config, store db.Store) (*Server, error) {
+func NewServer(config util.Config, store db.Store, roleService role_service.RoleService) (*Server, error) {
 
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
@@ -31,25 +30,27 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		config:     config,
 	}
 
-	roleService := role_service.NewRoleService(store, context.Background())
-	roleService.InitRole()
-
 	router := gin.Default()
 
 	router.POST("/auth/activate", server.activateUser)
 	router.POST("/auth/login", server.login)
+	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 
-	router.POST("/departments", server.createDepartment,
-		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeCreateAndUpdateDepartments))
+	authRoutes.POST("/departments",
+		privilegeMiddleware(roleService, db.PrivilegeCreateAndUpdateJobs),
+		server.createDepartment)
 	// router for job
-	router.POST("/jobs", server.createJob).Use(
-		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeCreateAndUpdateJobs))
-	router.GET("/jobs/:id", server.getJob)
-	router.GET("/jobs", server.listJobs)
-	router.PUT("/jobs/:id", server.updateJob,
-		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeCreateAndUpdateJobs))
-	router.DELETE("/jobs/:id", server.deleteJob,
-		privilegeMiddleware(context.Background(), *roleService, db.PrivilegeDeleteJobs))
+	authRoutes.POST("/jobs",
+		privilegeMiddleware(roleService, db.PrivilegeCreateAndUpdateJobs),
+		server.createJob)
+	authRoutes.GET("/jobs/:id", server.getJob)
+	authRoutes.GET("/jobs", server.listJobs)
+	authRoutes.PUT("/jobs/:id",
+		privilegeMiddleware(roleService, db.PrivilegeCreateAndUpdateJobs),
+		server.updateJob)
+	authRoutes.DELETE("/jobs/:id",
+		privilegeMiddleware(roleService, db.PrivilegeDeleteJobs),
+		server.deleteJob)
 
 	server.router = router
 	return server, nil

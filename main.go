@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"example/employee/server/api"
 	db "example/employee/server/db/sqlc"
@@ -25,7 +26,10 @@ func main() {
 	}
 
 	store := db.NewStore(connection)
-	server, err := api.NewServer(config, store)
+	roleService := role_service.NewRoleService(store, context.Background())
+	roleService.InitRole()
+
+	server, err := api.NewServer(config, store, *roleService)
 	if err != nil {
 		log.Fatal("Cannot create server: ", err)
 	}

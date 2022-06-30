@@ -102,12 +102,11 @@ func (roleService *RoleService) InitRole() {
 	}
 }
 
-func (roleService *RoleService) HasRolePriviledge(role string, requiredPrivilege db.Privilege) error {
-	getRole, err := roleService.Store.GetRoleByRoleName(roleService.Context, role)
+func (roleService *RoleService) HasRolePriviledgeByRoleId(roleId int64, requiredPrivilege db.Privilege) error {
+	getRole, err := roleService.Store.GetRole(roleService.Context, roleId)
 	if err != nil {
 		return err
 	}
-
 	var rolePrivileges map[db.Privilege]bool
 	err = json.Unmarshal([]byte(getRole.Privileges), &rolePrivileges)
 	if err != nil {
@@ -115,16 +114,9 @@ func (roleService *RoleService) HasRolePriviledge(role string, requiredPrivilege
 	}
 
 	if _, found := rolePrivileges[requiredPrivilege]; !found {
+		fmt.Println("should go to this line")
 		return fmt.Errorf("privilege %s not found", requiredPrivilege)
 	}
 
 	return nil
-}
-
-func (roleService *RoleService) HasRolePriviledgeByRoleId(roleId int64, requiredPrivilege db.Privilege) error {
-	getRole, err := roleService.Store.GetRole(roleService.Context, roleId)
-	if err != nil {
-		return err
-	}
-	return roleService.HasRolePriviledge(getRole.Role, requiredPrivilege)
 }
