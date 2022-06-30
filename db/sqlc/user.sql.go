@@ -9,6 +9,22 @@ import (
 	"context"
 )
 
+const activateUser = `-- name: ActivateUser :exec
+UPDATE users
+SET hashed_password = $1, status = 'activated', updated_at = now()
+WHERE email = $2
+`
+
+type ActivateUserParams struct {
+	HashedPassword string `json:"hashed_password"`
+	Email          string `json:"email"`
+}
+
+func (q *Queries) ActivateUser(ctx context.Context, arg ActivateUserParams) error {
+	_, err := q.db.ExecContext(ctx, activateUser, arg.HashedPassword, arg.Email)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
 email,

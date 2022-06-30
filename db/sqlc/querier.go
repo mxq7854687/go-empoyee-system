@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	ActivateUser(ctx context.Context, arg ActivateUserParams) error
 	CreateDepartment(ctx context.Context, departmentName string) (Department, error)
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error)
 	CreateJob(ctx context.Context, arg CreateJobParams) (Job, error)
