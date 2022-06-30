@@ -104,7 +104,7 @@ func TestCreateJob(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			currentTest.buildStub(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			//Marshal body data to JSON
@@ -194,7 +194,7 @@ func TestGetJob(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			currentTest.buildStub(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/jobs/%d", currentTest.jobID)
@@ -307,7 +307,7 @@ func TestListJobs(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			currentTest.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := "/jobs"
@@ -428,7 +428,7 @@ func TestUpdateJob(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			currentTest.buildStub(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			//Marshal body data to JSON
@@ -532,7 +532,7 @@ func TestDeleteJob(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			currentTest.buildStub(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/jobs/%d", currentTest.jobID)
