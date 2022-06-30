@@ -35,6 +35,20 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// ActivateUser mocks base method.
+func (m *MockStore) ActivateUser(arg0 context.Context, arg1 db.ActivateUserParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ActivateUser", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ActivateUser indicates an expected call of ActivateUser.
+func (mr *MockStoreMockRecorder) ActivateUser(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActivateUser", reflect.TypeOf((*MockStore)(nil).ActivateUser), arg0, arg1)
+}
+
 // CreateDepartment mocks base method.
 func (m *MockStore) CreateDepartment(arg0 context.Context, arg1 string) (db.Department, error) {
 	m.ctrl.T.Helper()

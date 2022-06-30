@@ -48,3 +48,23 @@ func TestGetUser(t *testing.T) {
 	require.WithinDuration(t, user1.UpdatedAt, user2.UpdatedAt, time.Second)
 	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
 }
+
+func TestResetUserPassword(t *testing.T) {
+	user1 := createRandomUser(t)
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+	require.NoError(t, err)
+
+	// TODO add hook to update the time when trigger the query instead of manually update
+	arg := ActivateUserParams{
+		Email:          user1.Email,
+		HashedPassword: hashedPassword,
+	}
+
+	testQueries.ActivateUser(context.TODO(), arg)
+
+	updatedUser, err := testQueries.GetUser(context.Background(), user1.Email)
+	require.NoError(t, err)
+	require.Equal(t, hashedPassword, updatedUser.HashedPassword)
+	require.True(t, updatedUser.UpdatedAt.After(user1.UpdatedAt))
+	require.Equal(t, updatedUser.Status, UserStatusActivated)
+}
