@@ -114,7 +114,6 @@ func (roleService *RoleService) HasRolePriviledgeByRoleId(roleId int64, required
 	}
 
 	if _, found := rolePrivileges[requiredPrivilege]; !found {
-		fmt.Println("should go to this line")
 		return fmt.Errorf("privilege %s not found", requiredPrivilege)
 	}
 

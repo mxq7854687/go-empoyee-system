@@ -16,13 +16,11 @@ func privilegeMiddleware(roleService role_service.RoleService, privilege db.Priv
 		authUser, err := roleService.Store.GetUser(ctx, authPayload.Email)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
-			return
 		}
 
 		err = roleService.HasRolePriviledgeByRoleId(authUser.RoleID.Int64, privilege)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, errorResponse(err))
-			return
 		}
 
 		ctx.Next()

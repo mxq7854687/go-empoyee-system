@@ -32,7 +32,6 @@ func mockStaffRole() db.Role {
 }
 
 func mockRole(role role_service.Role) (db.Role, error) {
-	fmt.Println(role)
 	switch role {
 	case role_service.Admin:
 		return mockAdminRole(), nil
