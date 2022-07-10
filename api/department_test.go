@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	mockdb "example/employee/server/db/mock"
 	db "example/employee/server/db/sqlc"
+	"example/employee/server/service/role_service"
+	"example/employee/server/token"
 	"example/employee/server/util"
 	"fmt"
 	"io/ioutil"
@@ -28,6 +30,7 @@ func TestPostDepartmentAPI(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		createDepartmentRequest CreateDepartmentRequest
+		mockMiddleware          func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker)
 		buildStubs              func(store *mockdb.MockStore)
 		checkResponse           func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -35,6 +38,9 @@ func TestPostDepartmentAPI(t *testing.T) {
 			name: "OK",
 			createDepartmentRequest: CreateDepartmentRequest{
 				DepartmentName: department.DepartmentName,
+			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -52,6 +58,9 @@ func TestPostDepartmentAPI(t *testing.T) {
 			createDepartmentRequest: CreateDepartmentRequest{
 				DepartmentName: department.DepartmentName,
 			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateDepartment(gomock.Any(), gomock.Eq(department.DepartmentName)).
@@ -61,6 +70,19 @@ func TestPostDepartmentAPI(t *testing.T) {
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 				requiredBodyMatchDepartment(t, recorder.Body, department)
+			},
+		},
+		{
+			name: "No Privilege",
+			createDepartmentRequest: CreateDepartmentRequest{
+				DepartmentName: department.DepartmentName,
+			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Staff)
+			},
+			buildStubs: func(store *mockdb.MockStore) {},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
 	}
@@ -78,9 +100,9 @@ func TestPostDepartmentAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(tc.createDepartmentRequest)
 			url := fmt.Sprintf("/departments")
 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBytes))
-
 			require.NoError(t, err)
-			addMockAuthBearer(t, request, server.tokenMaker)
+
+			tc.mockMiddleware(t, store, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})

@@ -38,15 +38,6 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, e
 	return i, err
 }
 
-const deleteAllRole = `-- name: DeleteAllRole :exec
-DELETE FROM roles
-`
-
-func (q *Queries) DeleteAllRole(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteAllRole)
-	return err
-}
-
 const getRole = `-- name: GetRole :one
 SELECT id, role, privileges, updated_at, created_at FROM roles
 WHERE id = $1 LIMIT 1

@@ -15,6 +15,3 @@ WHERE id = $1 LIMIT 1;
 -- name: GetRoleByRoleName :one
 SELECT * FROM roles
 WHERE role = $1 LIMIT 1;
-
--- name: DeleteAllRole :exec
-DELETE FROM roles;

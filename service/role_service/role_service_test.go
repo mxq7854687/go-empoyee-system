@@ -34,15 +34,15 @@ func TestInitRole(t *testing.T) {
 	require.Equal(t, string(Staff), staffRole.Role)
 }
 
-func TestHasRolePriviledge(t *testing.T) {
-	_, err := roleService.CreateStaffRole()
+func TestHasRolePriviledgeByRoleId(t *testing.T) {
+	staffRole, err := roleService.CreateStaffRole()
 	require.NoError(t, err)
-	_, err = roleService.CreateAdminRole()
-	require.NoError(t, err)
-
-	err = roleService.HasRolePriviledge(Admin, db.PrivilegeCreateAndUpdateDepartments)
+	adminRole, err := roleService.CreateAdminRole()
 	require.NoError(t, err)
 
-	err = roleService.HasRolePriviledge(Staff, db.PrivilegeCreateAndUpdateDepartments)
+	err = roleService.HasRolePriviledgeByRoleId(adminRole.ID, db.PrivilegeCreateAndUpdateDepartments)
+	require.NoError(t, err)
+
+	err = roleService.HasRolePriviledgeByRoleId(staffRole.ID, db.PrivilegeCreateAndUpdateDepartments)
 	require.Error(t, err)
 }

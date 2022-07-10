@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	mockdb "example/employee/server/db/mock"
 	db "example/employee/server/db/sqlc"
+	"example/employee/server/service/role_service"
+	"example/employee/server/token"
 	"example/employee/server/util"
 	"fmt"
 	"io/ioutil"
@@ -22,10 +24,11 @@ func TestCreateJob(t *testing.T) {
 	job := randomJob()
 
 	testCases := []struct {
-		name          string
-		body          gin.H
-		buildStub     func(store *mockdb.MockStore)
-		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+		name           string
+		body           gin.H
+		mockMiddleware func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker)
+		buildStub      func(store *mockdb.MockStore)
+		checkResponse  func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -33,6 +36,9 @@ func TestCreateJob(t *testing.T) {
 				"job_title":  job.JobTitle,
 				"min_salary": job.MinSalary,
 				"max_salary": job.MaxSalary,
+			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				args := db.CreateJobParams{
@@ -58,6 +64,9 @@ func TestCreateJob(t *testing.T) {
 				"min_salary": job.MinSalary,
 				"max_salary": job.MaxSalary,
 			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				args := db.CreateJobParams{
 					JobTitle:  job.JobTitle,
@@ -77,6 +86,9 @@ func TestCreateJob(t *testing.T) {
 		{
 			name: "BadRequest-Invalid body",
 			body: gin.H{},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				args := db.CreateJobParams{
 					JobTitle:  job.JobTitle,
@@ -90,6 +102,17 @@ func TestCreateJob(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "No Privilege should get 403",
+			body: gin.H{},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Staff)
+			},
+			buildStub: func(store *mockdb.MockStore) {},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
 	}
@@ -115,7 +138,7 @@ func TestCreateJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
-			addMockAuthBearer(t, request, server.tokenMaker)
+			currentTest.mockMiddleware(t, store, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
@@ -334,11 +357,12 @@ func TestUpdateJob(t *testing.T) {
 	updatedJobTitle := util.RandomJobTitle()
 
 	testCases := []struct {
-		name          string
-		jobID         int64
-		body          gin.H
-		buildStub     func(store *mockdb.MockStore)
-		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+		name           string
+		jobID          int64
+		body           gin.H
+		mockMiddleware func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker)
+		buildStub      func(store *mockdb.MockStore)
+		checkResponse  func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:  "OK",
@@ -347,6 +371,9 @@ func TestUpdateJob(t *testing.T) {
 				"job_title":  updatedJobTitle,
 				"min_salary": job.MinSalary,
 				"max_salary": job.MaxSalary,
+			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 
@@ -375,6 +402,9 @@ func TestUpdateJob(t *testing.T) {
 				"min_salary": job.MinSalary,
 				"max_salary": job.MaxSalary,
 			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					UpdateJob(gomock.Any(), gomock.Any()).
@@ -393,6 +423,9 @@ func TestUpdateJob(t *testing.T) {
 				"min_salary": job.MinSalary,
 				"max_salary": job.MaxSalary,
 			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					UpdateJob(gomock.Any(), gomock.Any()).
@@ -410,6 +443,9 @@ func TestUpdateJob(t *testing.T) {
 				"min_salary": job.MinSalary,
 				"max_salary": job.MaxSalary,
 			},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					UpdateJob(gomock.Any(), gomock.Any()).
@@ -417,6 +453,17 @@ func TestUpdateJob(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "No Privilege should get 403",
+			body: gin.H{},
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Staff)
+			},
+			buildStub: func(store *mockdb.MockStore) {},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
 	}
@@ -442,7 +489,7 @@ func TestUpdateJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(data))
 			require.NoError(t, err)
 
-			addMockAuthBearer(t, request, server.tokenMaker)
+			currentTest.mockMiddleware(t, store, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})
@@ -453,14 +500,18 @@ func TestDeleteJob(t *testing.T) {
 	job := randomJob()
 
 	testCases := []struct {
-		name          string
-		jobID         int64
-		buildStub     func(store *mockdb.MockStore)
-		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+		name           string
+		jobID          int64
+		mockMiddleware func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker)
+		buildStub      func(store *mockdb.MockStore)
+		checkResponse  func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:  "OK",
 			jobID: job.JobID,
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
@@ -475,6 +526,9 @@ func TestDeleteJob(t *testing.T) {
 		{
 			name:  "BadRequest",
 			jobID: -1,
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteJob(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -485,6 +539,9 @@ func TestDeleteJob(t *testing.T) {
 		{
 			name:  "NotFound",
 			jobID: job.JobID,
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
@@ -499,6 +556,9 @@ func TestDeleteJob(t *testing.T) {
 		{
 			name:  "InternalError - from GetJob",
 			jobID: job.JobID,
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
@@ -513,6 +573,9 @@ func TestDeleteJob(t *testing.T) {
 		{
 			name:  "InternalError - from DeleteJob",
 			jobID: job.JobID,
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Admin)
+			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteJob(gomock.Any(), gomock.Eq(job.JobID)).
@@ -522,6 +585,17 @@ func TestDeleteJob(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:  "No Privilege should get 403",
+			jobID: job.JobID,
+			mockMiddleware: func(t *testing.T, store *mockdb.MockStore, request *http.Request, tokenMaker token.Maker) {
+				mockRolePrivilegeAuth(t, store, request, tokenMaker, role_service.Staff)
+			},
+			buildStub: func(store *mockdb.MockStore) {},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
 	}
@@ -543,7 +617,7 @@ func TestDeleteJob(t *testing.T) {
 			request, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
-			addMockAuthBearer(t, request, server.tokenMaker)
+			currentTest.mockMiddleware(t, store, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			currentTest.checkResponse(t, recorder)
 		})

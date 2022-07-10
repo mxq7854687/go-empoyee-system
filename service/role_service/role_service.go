@@ -102,12 +102,11 @@ func (roleService *RoleService) InitRole() {
 	}
 }
 
-func (roleService *RoleService) HasRolePriviledge(role Role, requiredPrivilege db.Privilege) error {
-	getRole, err := roleService.Store.GetRoleByRoleName(roleService.Context, string(role))
+func (roleService *RoleService) HasRolePriviledgeByRoleId(roleId int64, requiredPrivilege db.Privilege) error {
+	getRole, err := roleService.Store.GetRole(roleService.Context, roleId)
 	if err != nil {
 		return err
 	}
-
 	var rolePrivileges map[db.Privilege]bool
 	err = json.Unmarshal([]byte(getRole.Privileges), &rolePrivileges)
 	if err != nil {

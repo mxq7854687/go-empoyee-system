@@ -2,6 +2,7 @@ package api
 
 import (
 	db "example/employee/server/db/sqlc"
+	"example/employee/server/service/role_service"
 	"example/employee/server/token"
 	"example/employee/server/util"
 	"fmt"
@@ -16,7 +17,7 @@ type Server struct {
 	config     util.Config
 }
 
-func NewServer(config util.Config, store db.Store) (*Server, error) {
+func NewServer(config util.Config, store db.Store, roleService role_service.RoleService) (*Server, error) {
 
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
@@ -31,17 +32,25 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 	router := gin.Default()
 
-	router.POST("/auth/login", server.login)
 	router.POST("/auth/activate", server.activateUser)
+	router.POST("/auth/login", server.login)
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 
-	authRoutes.POST("/departments", server.createDepartment)
+	authRoutes.POST("/departments",
+		privilegeMiddleware(roleService, db.PrivilegeCreateAndUpdateJobs),
+		server.createDepartment)
 	// router for job
-	authRoutes.POST("/jobs", server.createJob)
+	authRoutes.POST("/jobs",
+		privilegeMiddleware(roleService, db.PrivilegeCreateAndUpdateJobs),
+		server.createJob)
 	authRoutes.GET("/jobs/:id", server.getJob)
 	authRoutes.GET("/jobs", server.listJobs)
-	authRoutes.PUT("/jobs/:id", server.updateJob)
-	authRoutes.DELETE("/jobs/:id", server.deleteJob)
+	authRoutes.PUT("/jobs/:id",
+		privilegeMiddleware(roleService, db.PrivilegeCreateAndUpdateJobs),
+		server.updateJob)
+	authRoutes.DELETE("/jobs/:id",
+		privilegeMiddleware(roleService, db.PrivilegeDeleteJobs),
+		server.deleteJob)
 
 	server.router = router
 	return server, nil

@@ -33,17 +33,20 @@ func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 		tokenFields := strings.Fields(authorizationHeader)
 		if len(tokenFields) < 2 {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errRes(invalidAuthHeader))
+			return
 		}
 
 		authType := strings.ToLower(tokenFields[0])
 		if authType != authTypeBearer {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errRes(unSupportedAuth))
+			return
 		}
 
 		accessToken := tokenFields[1]
 		payload, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errRes(unSupportedAuth))
+			return
 		}
 
 		ctx.Set(authPayLoadKey, payload)

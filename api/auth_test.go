@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	mockdb "example/employee/server/db/mock"
 	db "example/employee/server/db/sqlc"
@@ -41,6 +42,7 @@ func randomUser(t *testing.T) (user db.User, password string) {
 		Email:          util.RandomEmail(),
 		HashedPassword: hashedPassword,
 		Status:         db.UserStatusActivated,
+		RoleID:         sql.NullInt64{util.RandomInt64(1, 100), true},
 	}
 	return
 }
@@ -142,6 +144,7 @@ func randomPendingUser(t *testing.T) db.User {
 		Status:         db.UserStatusPending,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
+		RoleID:         sql.NullInt64{util.RandomInt64(1, 100), true},
 	}
 }
 func TestActivateUserAPI(t *testing.T) {
